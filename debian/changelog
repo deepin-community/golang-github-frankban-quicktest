@@ -1,0 +1,142 @@
+golang-github-frankban-quicktest (1.14.0-1) unstable; urgency=medium
+
+  * New upstream version 1.14.0
+  * Update versioned dependencies as per go.mod
+
+ -- Anthony Fok <foka@debian.org>  Thu, 04 Nov 2021 05:41:57 -0600
+
+golang-github-frankban-quicktest (1.13.1-1) unstable; urgency=medium
+
+  * New upstream version 1.13.1
+
+ -- Anthony Fok <foka@debian.org>  Sun, 31 Oct 2021 16:30:52 -0600
+
+golang-github-frankban-quicktest (1.13.0-1) unstable; urgency=medium
+
+  * New upstream version 1.13.0
+
+ -- Anthony Fok <foka@debian.org>  Fri, 29 Oct 2021 01:01:31 -0600
+
+golang-github-frankban-quicktest (1.12.0-1) unstable; urgency=medium
+
+  * New upstream version 1.12.0
+  * Bump Standards-Version to 4.6.0 (no change)
+  * Mark library package with "Multi-Arch: foreign"
+  * Update go-cmp dependency to (>= 0.5.5) as per go.mod
+
+ -- Anthony Fok <foka@debian.org>  Tue, 12 Oct 2021 02:48:48 -0600
+
+golang-github-frankban-quicktest (1.11.3-1) unstable; urgency=medium
+
+  * New upstream version 1.11.3
+  * Bump dependency on golang-github-google-go-cmp-dev to (>= 0.5.4)
+  * debian/control: Bump Standards-Version to 4.5.1 (no change)
+
+ -- Anthony Fok <foka@debian.org>  Sun, 08 Aug 2021 03:19:26 -0600
+
+golang-github-frankban-quicktest (1.11.3-1~exp1) experimental; urgency=medium
+
+  * New upstream version 1.11.3
+  * Bump dependency on golang-github-google-go-cmp-dev to (>= 0.5.4)
+  * debian/control: Bump Standards-Version to 4.5.1 (no change)
+
+ -- Anthony Fok <foka@debian.org>  Sun, 28 Feb 2021 04:22:37 -0700
+
+golang-github-frankban-quicktest (1.11.2-1) unstable; urgency=medium
+
+  * New upstream version 1.11.2
+  * debian/control: Change Section from devel to golang
+
+ -- Anthony Fok <foka@debian.org>  Mon, 16 Nov 2020 04:37:29 -0700
+
+golang-github-frankban-quicktest (1.11.1-1) unstable; urgency=medium
+
+  * New upstream version 1.11.1
+
+ -- Anthony Fok <foka@debian.org>  Sat, 31 Oct 2020 06:20:33 -0600
+
+golang-github-frankban-quicktest (1.11.0-1) unstable; urgency=medium
+
+  * New upstream version 1.11.0
+  * debian/gbp.conf: Enable pristine-tar
+
+ -- Anthony Fok <foka@debian.org>  Fri, 23 Oct 2020 01:11:35 -0600
+
+golang-github-frankban-quicktest (1.10.2-1) unstable; urgency=medium
+
+  [ Debian Janitor ]
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
+    Repository-Browse.
+
+  [ Anthony Fok ]
+  * New upstream version 1.10.2
+  * Update versioned dependencies as per go.mod
+  * Bump debhelper dependency to "Build-Depends: debhelper-compat (= 13)"
+
+ -- Anthony Fok <foka@debian.org>  Sat, 19 Sep 2020 01:35:56 -0600
+
+golang-github-frankban-quicktest (1.9.0-1) unstable; urgency=medium
+
+  * New upstream version 1.9.0
+  * Replace golang-pretty-dev with golang-github-kr-pretty-dev
+    golang-pretty-dev is a transition package which has been removed
+
+ -- Shengjing Zhu <zhsj@debian.org>  Thu, 16 Apr 2020 17:05:14 +0800
+
+golang-github-frankban-quicktest (1.7.3-1) unstable; urgency=medium
+
+  * New upstream version 1.7.3
+  * Remove 0001-Upgrade-to-go-cmp-v0.4.0.patch
+    which has been applied in upstream v1.7.3
+
+ -- Anthony Fok <foka@debian.org>  Thu, 20 Feb 2020 23:17:26 -0700
+
+golang-github-frankban-quicktest (1.6.0-2) unstable; urgency=medium
+
+  * debian/gbp.conf: Set debian-branch to debian/sid
+    for DEP-14 conformance
+  * Bump dependency on golang-github-google-go-cmp-dev to (>= 0.4.0~)
+  * Add 0001-Upgrade-to-go-cmp-v0.4.0.patch
+    to adjust checker_test.go for go-cmp’s changes to panic message
+    for accessing an unexported field
+  * Add "Rules-Requires-Root: no" to debian/control
+  * Bump Standards-Version to 4.5.0 (no change)
+
+ -- Anthony Fok <foka@debian.org>  Wed, 19 Feb 2020 17:24:54 -0700
+
+golang-github-frankban-quicktest (1.6.0-1) unstable; urgency=medium
+
+  * New upstream version 1.6.0
+  * Apply "cme fix dpkg" fixes:
+    - Bump Standards-Version to 4.4.1 (no change)
+  * Bump dependency on golang-github-google-go-cmp-dev to (>= 0.3.1~)
+
+ -- Anthony Fok <foka@debian.org>  Thu, 07 Nov 2019 13:27:15 -0700
+
+golang-github-frankban-quicktest (1.4.1-1) unstable; urgency=medium
+
+  * New upstream version 1.4.1
+  * Remove 'workaround to make checker_test.go work with "go test -v"'
+    due to upstream fix in https://github.com/frankban/quicktest/pull/47.
+  * Add myself to the list of Uploaders
+
+ -- Anthony Fok <foka@debian.org>  Wed, 14 Aug 2019 03:08:04 -0600
+
+golang-github-frankban-quicktest (1.4.0-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream version 1.4.0
+  * Remove debian/gbp.conf to restore upstream-tag to upstream/%(version)s
+  * Bump Standards-Version to 4.4.0 (no change)
+  * Bump debhelper dependency to "Build-Depends: debhelper-compat (= 12)"
+  * Update dependency golang-github-google-go-cmp-dev to (>= 0.3.0~)
+  * Add workaround to make checker_test.go work with "go test -v",
+    see https://github.com/frankban/quicktest/issues/46
+
+ -- Anthony Fok <foka@debian.org>  Mon, 05 Aug 2019 12:28:05 -0600
+
+golang-github-frankban-quicktest (1.0.0-1) unstable; urgency=medium
+
+  * Initial release (Closes: 905073)
+
+ -- Shengjing Zhu <i@zhsj.me>  Tue, 31 Jul 2018 16:07:22 +0800
