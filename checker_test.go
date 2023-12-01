@@ -1,4 +1,4 @@
-// Licensed under the MIT license, see LICENCE file for details.
+// Licensed under the MIT license, see LICENSE file for details.
 
 package quicktest_test
 
@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -265,7 +266,37 @@ want type:
 got:
   e"bad wolf"
 want:
-  <same as "got">
+  <same as "got" but different pointer value>
+`,
+}, {
+	about:   "Equals: different pointer errors with the same message",
+	checker: qt.Equals,
+	got: &errTest{
+		msg: "bad wolf",
+	},
+	args: []interface{}{&errTest{
+		msg: "bad wolf",
+	}},
+	expectedCheckFailure: `
+error:
+  values are not equal
+got:
+  e"bad wolf"
+want:
+  <same as "got" but different pointer value>
+`,
+}, {
+	about:   "Equals: different pointers with the same formatted output",
+	checker: qt.Equals,
+	got:     new(int),
+	args:    []interface{}{new(int)},
+	expectedCheckFailure: `
+error:
+  values are not equal
+got:
+  &int(0)
+want:
+  <same as "got" but different pointer value>
 `,
 }, {
 	about:   "Equals: nil struct",
@@ -386,18 +417,6 @@ error:
   values are not deep equal
 diff (-got +want):
 %s
-`, diff(cmpEqualsGot, cmpEqualsWant)),
-}, {
-	about:   "CmpEquals: different values: verbose",
-	checker: qt.CmpEquals(),
-	got:     cmpEqualsGot,
-	args:    []interface{}{cmpEqualsWant},
-	verbose: true,
-	expectedCheckFailure: fmt.Sprintf(`
-error:
-  values are not deep equal
-diff (-got +want):
-%s
 got:
   struct { Strings []interface {}; Ints []int }{
       Strings: {
@@ -415,6 +434,80 @@ want:
       Ints: {42},
   }
 `, diff(cmpEqualsGot, cmpEqualsWant)),
+}, {
+	about:   "CmpEquals: different values, long output",
+	checker: qt.CmpEquals(),
+	got:     []interface{}{cmpEqualsWant, "extra line 1", "extra line 2", "extra line 3"},
+	args:    []interface{}{[]interface{}{cmpEqualsWant, "extra line 1"}},
+	expectedCheckFailure: fmt.Sprintf(`
+error:
+  values are not deep equal
+diff (-got +want):
+%s
+got:
+  <suppressed due to length (11 lines), use -v for full output>
+want:
+  []interface {}{
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+      "extra line 1",
+  }
+`, diff([]interface{}{cmpEqualsWant, "extra line 1", "extra line 2", "extra line 3"}, []interface{}{cmpEqualsWant, "extra line 1"})),
+}, {
+	about:   "CmpEquals: different values: long output and verbose",
+	checker: qt.CmpEquals(),
+	got:     []interface{}{cmpEqualsWant, "extra line 1", "extra line 2"},
+	args:    []interface{}{[]interface{}{cmpEqualsWant, "extra line 1"}},
+	verbose: true,
+	expectedCheckFailure: fmt.Sprintf(`
+error:
+  values are not deep equal
+diff (-got +want):
+%s
+got:
+  []interface {}{
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+      "extra line 1",
+      "extra line 2",
+  }
+want:
+  []interface {}{
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+      "extra line 1",
+  }
+`, diff([]interface{}{cmpEqualsWant, "extra line 1", "extra line 2"}, []interface{}{cmpEqualsWant, "extra line 1"})),
+}, {
+	about:   "CmpEquals: different values, long output, same number of lines",
+	checker: qt.CmpEquals(),
+	got:     []interface{}{cmpEqualsWant, "extra line 1", "extra line 2", "extra line 3"},
+	args:    []interface{}{[]interface{}{cmpEqualsWant, "extra line 1", "extra line 2", "extra line three"}},
+	expectedCheckFailure: fmt.Sprintf(`
+error:
+  values are not deep equal
+diff (-got +want):
+%s
+got:
+  <suppressed due to length (11 lines), use -v for full output>
+want:
+  <suppressed due to length (11 lines), use -v for full output>
+`, diff([]interface{}{cmpEqualsWant, "extra line 1", "extra line 2", "extra line 3"}, []interface{}{cmpEqualsWant, "extra line 1", "extra line 2", "extra line three"})),
 }, {
 	about:   "CmpEquals: same values with options",
 	checker: qt.CmpEquals(sameInts),
@@ -442,20 +535,6 @@ error:
   values are not deep equal
 diff (-got +want):
 %s
-`, diff([]int{1, 2, 4}, []int{3, 2, 1}, sameInts)),
-}, {
-	about:   "CmpEquals: different values with options: verbose",
-	checker: qt.CmpEquals(sameInts),
-	got:     []int{1, 2, 4},
-	args: []interface{}{
-		[]int{3, 2, 1},
-	},
-	verbose: true,
-	expectedCheckFailure: fmt.Sprintf(`
-error:
-  values are not deep equal
-diff (-got +want):
-%s
 got:
   []int{1, 2, 4}
 want:
@@ -474,13 +553,15 @@ want:
 	},
 	expectedCheckFailure: `
 error:
-  cannot handle unexported field at root.answer:
+  bad check: cannot handle unexported field at root.answer:
   	"github.com/frankban/quicktest_test".(struct { answer int })
   consider using a custom Comparer; if you control the implementation of type, you can also consider using an Exporter, AllowUnexported, or cmpopts.IgnoreUnexported
-got:
-  struct { answer int }{answer:42}
-want:
-  <same as "got">
+`,
+	expectedNegateFailure: `
+error:
+  bad check: cannot handle unexported field at root.answer:
+  	"github.com/frankban/quicktest_test".(struct { answer int })
+  consider using a custom Comparer; if you control the implementation of type, you can also consider using an Exporter, AllowUnexported, or cmpopts.IgnoreUnexported
 `,
 }, {
 	about:   "CmpEquals: structs with unexported fields ignored",
@@ -586,18 +667,6 @@ error:
   values are not deep equal
 diff (-got +want):
 %s
-`, diff(cmpEqualsGot, cmpEqualsWant)),
-}, {
-	about:   "DeepEquals: different values: verbose",
-	checker: qt.DeepEquals,
-	got:     cmpEqualsGot,
-	args:    []interface{}{cmpEqualsWant},
-	verbose: true,
-	expectedCheckFailure: fmt.Sprintf(`
-error:
-  values are not deep equal
-diff (-got +want):
-%s
 got:
   struct { Strings []interface {}; Ints []int }{
       Strings: {
@@ -615,6 +684,68 @@ want:
       Ints: {42},
   }
 `, diff(cmpEqualsGot, cmpEqualsWant)),
+}, {
+	about:   "DeepEquals: different values: long output",
+	checker: qt.DeepEquals,
+	got:     []interface{}{cmpEqualsWant, cmpEqualsWant},
+	args:    []interface{}{[]interface{}{cmpEqualsWant, cmpEqualsWant, 42}},
+	expectedCheckFailure: fmt.Sprintf(`
+error:
+  values are not deep equal
+diff (-got +want):
+%s
+got:
+  <suppressed due to length (15 lines), use -v for full output>
+want:
+  <suppressed due to length (16 lines), use -v for full output>
+`, diff([]interface{}{cmpEqualsWant, cmpEqualsWant}, []interface{}{cmpEqualsWant, cmpEqualsWant, 42})),
+}, {
+	about:   "DeepEquals: different values: long output and verbose",
+	checker: qt.DeepEquals,
+	got:     []interface{}{cmpEqualsWant, cmpEqualsWant},
+	args:    []interface{}{[]interface{}{cmpEqualsWant, cmpEqualsWant, 42}},
+	verbose: true,
+	expectedCheckFailure: fmt.Sprintf(`
+error:
+  values are not deep equal
+diff (-got +want):
+%s
+got:
+  []interface {}{
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+  }
+want:
+  []interface {}{
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+      struct { Strings []interface {}; Ints []int }{
+          Strings: {
+              "who",
+              "dalek",
+          },
+          Ints: {42},
+      },
+      int(42),
+  }
+`, diff([]interface{}{cmpEqualsWant, cmpEqualsWant}, []interface{}{cmpEqualsWant, cmpEqualsWant, 42})),
 }, {
 	about:   "ContentEquals: same values",
 	checker: qt.ContentEquals,
@@ -749,6 +880,13 @@ error:
   values are not deep equal
 diff (-got +want):
 %s
+got:
+  []string{"bad", "wolf"}
+want:
+  []interface {}{
+      "bad",
+      "wolf",
+  }
 `, diff([]string{"bad", "wolf"}, []interface{}{"bad", "wolf"})),
 }, {
 	about:   "ContentEquals: not enough arguments",
@@ -816,6 +954,45 @@ got value:
   "these are the voyages"
 regexp:
   "these are the .*"
+`,
+}, {
+	about:   "Matches: match with pre-compiled regexp",
+	checker: qt.Matches,
+	got:     bytes.NewBufferString("resistance is futile"),
+	args:    []interface{}{regexp.MustCompile("resistance is (futile|useful)")},
+	expectedNegateFailure: `
+error:
+  unexpected success
+got value:
+  s"resistance is futile"
+regexp:
+  s"resistance is (futile|useful)"
+`,
+}, {
+	about:   "Matches: mismatch with pre-compiled regexp",
+	checker: qt.Matches,
+	got:     bytes.NewBufferString("resistance is cool"),
+	args:    []interface{}{regexp.MustCompile("resistance is (futile|useful)")},
+	expectedCheckFailure: `
+error:
+  value.String() does not match regexp
+got value:
+  s"resistance is cool"
+regexp:
+  s"resistance is (futile|useful)"
+`,
+}, {
+	about:   "Matches: match with pre-compiled multi-line regexp",
+	checker: qt.Matches,
+	got:     bytes.NewBufferString("line 1\nline 2"),
+	args:    []interface{}{regexp.MustCompile(`line \d\nline \d`)},
+	expectedNegateFailure: `
+error:
+  unexpected success
+got value:
+  s"line 1\nline 2"
+regexp:
+  s"line \\d\\nline \\d"
 `,
 }, {
 	about:   "Matches: match with stringer",
@@ -1152,6 +1329,49 @@ want args:
   regexp
 `,
 }, {
+	about:   "ErrorMatches: match with pre-compiled regexp",
+	checker: qt.ErrorMatches,
+	got:     errBadWolf,
+	args:    []interface{}{regexp.MustCompile("bad (wolf|dog)")},
+	expectedNegateFailure: `
+error:
+  unexpected success
+got error:
+  bad wolf
+    file:line
+regexp:
+  s"bad (wolf|dog)"
+`,
+}, {
+	about:   "ErrorMatches: match with pre-compiled multi-line regexp",
+	checker: qt.ErrorMatches,
+	got:     errBadWolfMultiLine,
+	args:    []interface{}{regexp.MustCompile(`bad (wolf|dog)\nfaulty (logic|statement)`)},
+	expectedNegateFailure: `
+error:
+  unexpected success
+got error:
+  bad wolf
+  faulty logic
+    file:line
+regexp:
+  s"bad (wolf|dog)\\nfaulty (logic|statement)"
+`,
+}, {
+	about:   "ErrorMatches: mismatch with pre-compiled regexp",
+	checker: qt.ErrorMatches,
+	got:     errBadWolf,
+	args:    []interface{}{regexp.MustCompile("good (wolf|dog)")},
+	expectedCheckFailure: `
+error:
+  error does not match regexp
+got error:
+  bad wolf
+    file:line
+regexp:
+  s"good (wolf|dog)"
+`,
+}, {
 	about:   "PanicMatches: perfect match",
 	checker: qt.PanicMatches,
 	got:     func() { panic("error: bad wolf") },
@@ -1269,6 +1489,51 @@ regexp:
   nil
 `,
 }, {
+	about:   "PanicMatches: match with pre-compiled regexp",
+	checker: qt.PanicMatches,
+	got:     func() { panic("error: bad wolf") },
+	args:    []interface{}{regexp.MustCompile("error: bad (wolf|dog)")},
+	expectedNegateFailure: `
+error:
+  unexpected success
+panic value:
+  "error: bad wolf"
+function:
+  func() {...}
+regexp:
+  s"error: bad (wolf|dog)"
+`,
+}, {
+	about:   "PanicMatches: match with pre-compiled multi-line regexp",
+	checker: qt.PanicMatches,
+	got:     func() { panic("error: bad wolf\nfaulty logic") },
+	args:    []interface{}{regexp.MustCompile(`error: bad (wolf|dog)\nfaulty (logic|statement)`)},
+	expectedNegateFailure: `
+error:
+  unexpected success
+panic value:
+  "error: bad wolf\nfaulty logic"
+function:
+  func() {...}
+regexp:
+  s"error: bad (wolf|dog)\\nfaulty (logic|statement)"
+`,
+}, {
+	about:   "PanicMatches: mismatch with pre-compiled regexp",
+	checker: qt.PanicMatches,
+	got:     func() { panic("error: bad wolf") },
+	args:    []interface{}{regexp.MustCompile("good (wolf|dog)")},
+	expectedCheckFailure: `
+error:
+  panic value does not match regexp
+panic value:
+  "error: bad wolf"
+function:
+  func() {...}
+regexp:
+  s"good (wolf|dog)"
+`,
+}, {
 	about:   "PanicMatches: not a function",
 	checker: qt.PanicMatches,
 	got:     map[string]int{"answer": 42},
@@ -1378,7 +1643,7 @@ want args:
 	got:     nil,
 	expectedNegateFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   nil
 `,
@@ -1388,7 +1653,7 @@ got:
 	got:     (*struct{})(nil),
 	expectedNegateFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   (*struct {})(nil)
 `,
@@ -1398,7 +1663,7 @@ got:
 	got:     (func())(nil),
 	expectedNegateFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   func() {...}
 `,
@@ -1408,7 +1673,7 @@ got:
 	got:     (map[string]string)(nil),
 	expectedNegateFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   map[string]string{}
 `,
@@ -1418,7 +1683,7 @@ got:
 	got:     ([]int)(nil),
 	expectedNegateFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   []int(nil)
 `,
@@ -1489,7 +1754,7 @@ got:
 	got:     nil,
 	expectedCheckFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   nil
 `,
@@ -2245,11 +2510,24 @@ got:
 `,
 }, {
 	about:   "Not: failure",
+	checker: qt.Not(qt.Equals),
+	got:     42,
+	args:    []interface{}{42},
+	expectedCheckFailure: `
+error:
+  unexpected success
+got:
+  int(42)
+want:
+  <same as "got">
+`,
+}, {
+	about:   "Not: IsNil failure",
 	checker: qt.Not(qt.IsNil),
 	got:     nil,
 	expectedCheckFailure: `
 error:
-  unexpected success
+  got nil value but want non-nil
 got:
   nil
 `,
@@ -2438,14 +2716,18 @@ first mismatched element:
 	checker: qt.All(qt.DeepEquals),
 	got:     [][]string{{"a", "b"}, {"a", "c"}},
 	args:    []interface{}{[]string{"a", "b"}},
-	expectedCheckFailure: `
+	expectedCheckFailure: fmt.Sprintf(`
 error:
   mismatch at index 1
 error:
   values are not deep equal
 diff (-got +want):
-` + diff([]string{"a", "c"}, []string{"a", "b"}) + `
-`,
+%s
+got:
+  []string{"a", "c"}
+want:
+  []string{"a", "b"}
+`, diff([]string{"a", "c"}, []string{"a", "b"})),
 }, {
 	about:   "All bad checker args count",
 	checker: qt.All(qt.IsNil),
@@ -2667,6 +2949,14 @@ error:
   values are not deep equal
 diff (-got +want):
 %s
+got:
+  map[string]interface {}{
+      "NotThere": float64(1),
+  }
+want:
+  map[string]interface {}{
+      "First": float64(2),
+  }
 `, diff(map[string]interface{}{"NotThere": 1.0}, map[string]interface{}{"First": 2.0})),
 }, {
 	about:   "JSONEquals cannot unmarshal obtained value",
@@ -2771,18 +3061,25 @@ want:
 }}
 
 func TestCheckers(t *testing.T) {
+	original := qt.TestingVerbose
+	defer func() {
+		qt.TestingVerbose = original
+	}()
 	for _, test := range checkerTests {
-		checker := qt.WithVerbosity(test.checker, test.verbose)
+		*qt.TestingVerbose = func() bool {
+			return test.verbose
+		}
+
 		t.Run(test.about, func(t *testing.T) {
 			tt := &testingT{}
 			c := qt.New(tt)
-			ok := c.Check(test.got, checker, test.args...)
+			ok := c.Check(test.got, test.checker, test.args...)
 			checkResult(t, ok, tt.errorString(), test.expectedCheckFailure)
 		})
 		t.Run("Not "+test.about, func(t *testing.T) {
 			tt := &testingT{}
 			c := qt.New(tt)
-			ok := c.Check(test.got, qt.Not(checker), test.args...)
+			ok := c.Check(test.got, qt.Not(test.checker), test.args...)
 			checkResult(t, ok, tt.errorString(), test.expectedNegateFailure)
 		})
 	}

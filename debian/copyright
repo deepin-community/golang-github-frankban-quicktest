@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: quicktest
 Source: https://github.com/frankban/quicktest
+Upstream-Name: quicktest
 
 Files: *
 Copyright: 2017 Canonical Ltd.

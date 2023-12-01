@@ -1,4 +1,4 @@
-// Licensed under the MIT license, see LICENCE file for details.
+// Licensed under the MIT license, see LICENSE file for details.
 
 package quicktest_test
 
@@ -103,6 +103,24 @@ error:
   got non-nil value
 got:
   int(47)
+`,
+}, {
+	about:   "failure with multiple comments",
+	checker: qt.IsNil,
+	got:     42,
+	args: []interface{}{
+		qt.Commentf("bad wolf: %d", 42),
+		qt.Commentf("second comment"),
+	},
+	expectedFailure: `
+error:
+  got non-nil value
+comment:
+  bad wolf: 42
+comment:
+  second comment
+got:
+  int(42)
 `,
 }, {
 	about: "nil checker",
@@ -620,6 +638,7 @@ func TestCRunCustomType(t *testing.T) {
 }
 
 func checkResult(t *testing.T, ok bool, got, want string) {
+	t.Helper()
 	if want != "" {
 		assertPrefix(t, got, want+"stack:\n")
 		assertBool(t, ok, false)

@@ -1,7 +1,4 @@
-// Licensed under the MIT license, see LICENCE file for details.
-
-//go:build go1.13
-// +build go1.13
+// Licensed under the MIT license, see LICENSE file for details.
 
 package quicktest_test
 
@@ -21,12 +18,18 @@ type errTarget struct {
 }
 
 func (e *errTarget) Error() string {
-	return e.msg
+	return "ptr: " + e.msg
 }
 
-var (
-	targetErr = &errTarget{msg: "target"}
-)
+type errTargetNonPtr struct {
+	msg string
+}
+
+func (e errTargetNonPtr) Error() string {
+	return "non ptr: " + e.msg
+}
+
+var targetErr = &errTarget{msg: "target"}
 
 var errorCheckerTests = []struct {
 	about                 string
@@ -45,7 +48,7 @@ var errorCheckerTests = []struct {
 error:
   unexpected success
 got:
-  e"target"
+  e"ptr: target"
 as:
   &&quicktest_test.errTarget{msg:"target"}
 `,
@@ -58,7 +61,7 @@ as:
 error:
   unexpected success
 got:
-  e"wrapped: target"
+  e"wrapped: ptr: target"
 as:
   &&quicktest_test.errTarget{msg:"target"}
 `,
@@ -86,7 +89,20 @@ error:
 got:
   e"other error"
 as:
-  &(*quicktest_test.errTarget)(nil)
+  **quicktest_test.errTarget
+`,
+}, {
+	about:   "ErrorAs: fails if mismatch with a non-pointer error implementation",
+	checker: qt.ErrorAs,
+	got:     errors.New("other error"),
+	args:    []interface{}{new(errTargetNonPtr)},
+	expectedCheckFailure: `
+error:
+  wanted type is not found in error chain
+got:
+  e"other error"
+as:
+  *quicktest_test.errTargetNonPtr
 `,
 }, {
 	about:   "ErrorAs: bad check if invalid error",
@@ -119,6 +135,32 @@ error:
   bad check: errors: *target must be interface or implement error
 `,
 }, {
+	about:   "ErrorIs: nil to nil match",
+	checker: qt.ErrorIs,
+	got:     nil,
+	args:    []interface{}{nil},
+	expectedNegateFailure: `
+error:
+  unexpected success
+got:
+  nil
+want:
+  <same as "got">
+`,
+}, {
+	about:   "ErrorIs: non-nil to nil mismatch",
+	checker: qt.ErrorIs,
+	got:     targetErr,
+	args:    []interface{}{nil},
+	expectedCheckFailure: `
+error:
+  wanted error is not found in error chain
+got:
+  e"ptr: target"
+want:
+  nil
+`,
+}, {
 	about:   "ErrorIs: exact match",
 	checker: qt.ErrorIs,
 	got:     targetErr,
@@ -127,7 +169,7 @@ error:
 error:
   unexpected success
 got:
-  e"target"
+  e"ptr: target"
 want:
   <same as "got">
 `,
@@ -140,9 +182,9 @@ want:
 error:
   unexpected success
 got:
-  e"wrapped: target"
+  e"wrapped: ptr: target"
 want:
-  e"target"
+  e"ptr: target"
 `,
 }, {
 	about:   "ErrorIs: fails if nil error",
@@ -155,7 +197,7 @@ error:
 got:
   nil
 want:
-  e"target"
+  e"ptr: target"
 `,
 }, {
 	about:   "ErrorIs: fails if mismatch",
@@ -168,7 +210,7 @@ error:
 got:
   e"other error"
 want:
-  e"target"
+  e"ptr: target"
 `,
 }, {
 	about:   "ErrorIs: bad check if invalid error",

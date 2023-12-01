@@ -1,4 +1,4 @@
-// Licensed under the MIT license, see LICENCE file for details.
+// Licensed under the MIT license, see LICENSE file for details.
 
 package quicktest_test
 
@@ -27,6 +27,11 @@ func TestIsBadCheck(t *testing.T) {
 
 var errBadWolf = &errTest{
 	msg:       "bad wolf",
+	formatted: true,
+}
+
+var errBadWolfMultiLine = &errTest{
+	msg:       "bad wolf\nfaulty logic",
 	formatted: true,
 }
 
