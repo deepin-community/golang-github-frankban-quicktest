@@ -1,4 +1,4 @@
-// Licensed under the MIT license, see LICENCE file for details.
+// Licensed under the MIT license, see LICENSE file for details.
 
 package qtsuite_test
 
@@ -140,11 +140,6 @@ func (t *testingT) Run(name string, f func(t *testing.T)) bool {
 	}()
 	<-ch
 	return t.subTestResult
-}
-
-// errorString returns the error message.
-func (t *testingT) errorString() string {
-	return t.errorBuf.String()
 }
 
 // fatalString returns the fatal error message.

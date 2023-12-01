@@ -1,28 +1,28 @@
 Source: golang-github-frankban-quicktest
+Section: golang
+Priority: optional
 Maintainer: Debian Go Packaging Team <team+pkg-go@tracker.debian.org>
 Uploaders: Shengjing Zhu <zhsj@debian.org>,
            Anthony Fok <foka@debian.org>
-Section: golang
-Testsuite: autopkgtest-pkg-go
-Priority: optional
+Rules-Requires-Root: no
 Build-Depends: debhelper-compat (= 13),
-               dh-golang,
+               dh-sequence-golang,
                golang-any,
-               golang-github-google-go-cmp-dev (>= 0.5.6),
-               golang-github-kr-pretty-dev (>= 0.3.0)
-Standards-Version: 4.6.0
+               golang-github-google-go-cmp-dev (>= 0.5.9),
+               golang-github-kr-pretty-dev (>= 0.3.1)
+Testsuite: autopkgtest-pkg-go
+Standards-Version: 4.6.2
 Vcs-Browser: https://salsa.debian.org/go-team/packages/golang-github-frankban-quicktest
 Vcs-Git: https://salsa.debian.org/go-team/packages/golang-github-frankban-quicktest.git
 Homepage: https://github.com/frankban/quicktest
-Rules-Requires-Root: no
 XS-Go-Import-Path: github.com/frankban/quicktest
 
 Package: golang-github-frankban-quicktest-dev
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends},
-         golang-github-google-go-cmp-dev (>= 0.5.6),
-         golang-github-kr-pretty-dev (>= 0.3.0)
+Depends: golang-github-google-go-cmp-dev (>= 0.5.9),
+         golang-github-kr-pretty-dev (>= 0.3.1),
+         ${misc:Depends},
 Description: quick helpers for testing Go applications
  A collection of Go helpers for writing tests.
  .
